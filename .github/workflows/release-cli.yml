@@ -1,0 +1,78 @@
+name: Release CLI
+
+on:
+  # ---- TRIGGER 1: Automatic on tag push ----
+  push:
+    tags:
+      - 'v*' # Triggers if a tag is pushed manually
+
+  # ---- TRIGGER 2: Manual via UI ----
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to create (e.g., 1.0.0, no "v" prefix)'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to tag from (defaults to main)'
+        required: false
+        type: string
+        default: 'main'
+
+permissions:
+  contents: write # Needed to create/push tags AND to create GitHub Releases.
+
+jobs:
+  goreleaser:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+           # If triggered via workflow_dispatch, checkout the requested branch.
+           # Otherwise (tag push), checkout the tag itself using github.ref.
+          ref: ${{ github.event.inputs.branch || github.ref }}
+          fetch-depth: 0 # Needed for GoReleaser changelog
+
+      # =====================================================================
+      # Steps to Create Tag, ONLY if manually triggered via workflow_dispatch
+      # =====================================================================
+      - name: Configure Git User (if manually triggered)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: Create and Push Tag (if manually triggered)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+           TAG="v${{ github.event.inputs.version }}"
+           echo "Workflow triggered manually. Creating and pushing tag ${TAG}"
+
+           # Create annotated tag locally
+           git tag -a "${TAG}" -m "Release ${TAG}"
+
+           # Push tag using the workflow's default GITHUB_TOKEN
+           git push origin "${TAG}"
+           echo "Tag ${TAG} pushed."
+      # =====================================================================
+      # GoReleaser steps (Run for BOTH manual and tag-push triggers)
+      # =====================================================================
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23' # Specify your Go version
+          cache: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          # GoReleaser will automatically detect the tag that was just pushed
+          # (or the tag that triggered the workflow).
+          args: release --clean
+        env:
+           # GoReleaser uses the standard GITHUB_TOKEN to publish the release assets.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

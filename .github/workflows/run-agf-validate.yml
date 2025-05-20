@@ -1,0 +1,30 @@
+name: AGF General Validation
+
+on: [push, pull_request]
+
+# TODO: Separate jobs for validations (ie separate policies, terraform, metadata, etc.)
+
+jobs:
+  run-agf-validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Use the composite action ---
+      - name: Setup AGF CLI
+        id: setup_agf
+        uses: ./.github/actions/setup-agf
+        with:
+          version: 'v0.2.2' # Pass the required version input
+
+      - name: Run AGF Validation Checks
+        run: |
+          echo "AGF CLI should be in PATH now."
+          agf version # Verify it's working by calling it directly
+          echo "Running validation..."
+          agf validate
+          # echo "Full path from output: ${{ steps.setup_agf.outputs.cli-path }}"

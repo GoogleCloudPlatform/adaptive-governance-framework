@@ -1,0 +1,14 @@
+Policy Type,Location,Policy ID,Description,Postures,Author,Compliance Standards,Implements
+customsha,detectors/customsha/artifactRegistryScanningApiEnabled,artifactRegistryScanningApiEnabled,Require artifact registry scanning API to be enabled.,"folder_a_posture, org_node_posture, tfc_test_posture",tdesrosi@google.com,Example Standards :: ABC-123,"customOutput: {}
+description: When enforced, this detector finds if the container scanning API is enabled
+  for projects that have an Artifact Registry repository.
+predicate:
+  expression: '!(resource.name.contains(''containerscanning.googleapis.com''))'
+resourceSelector:
+  resourceTypes:
+  - serviceusage.googleapis.com/Service
+severity: MEDIUM
+recommendation: Enable containerscanning.googleapis.com
+"
+orgpolicy,detectors/orgpolicy/computeInstanceVMExternalIpAccess,computeInstanceVMExternalIpAccess,Deny external access for GCE instances.,"folder_a_posture, org_node_posture, tfc_test_posture",tdesrosi@google.com,Example Standards :: DEF-234; Example Standards :: GHI-345,Organization Policy: compute.vmExternalIpAccess
+sha,detectors/sha/APIKeyExists,APIKeyExists,SHA Module API_KEY_EXISTS,"org_node_posture, tfc_test_posture",tdesrosi@google.com,Organization Custom Standards :: 4.3; NIST SP 800-53 :: SC-13,SHA Module: API_KEY_EXISTS
