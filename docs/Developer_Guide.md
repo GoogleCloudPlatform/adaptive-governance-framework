@@ -1,28 +1,33 @@
 # AGF Project Developer Guide
 
-Welcome to the AGF project! This guide provides instructions for setting up your development environment, contributing
-code, and understanding our workflows.
+Welcome to the AGF project! This guide provides instructions for setting up your
+development environment, contributing code, and understanding our workflows.
 
 ## 1. Project Overview
 
-AGF is a Command Line Interface (CLI) tool designed for repository maintenance, validation of configuration files (like
-Terraform security postures and detector policies), and other automated tasks within this repository.
+AGF is a Command Line Interface (CLI) tool designed for repository maintenance,
+validation of configuration files (like Terraform security postures and detector
+policies), and other automated tasks within this repository.
 
-This repository contains both the Go source code for the `agf` CLI itself and the policy/configuration files it manages.
+This repository contains both the Go source code for the `agf` CLI itself and
+the policy/configuration files it manages.
 
 ## 2. Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-* **Go:** Version 1.23 or higher (check `go.mod` for the exact version). Needed for running tests, building `agf`
-  locally if desired, and for some pre-commit hooks.
-* **pre-commit:** For managing and running Git hooks automatically before commits. Install it via pip:
+* **Go:** Version 1.23 or higher (check `go.mod` for the exact version). Needed
+for running tests, building `agf` locally if desired, and for some pre-commit
+hooks.
+* **pre-commit:** For managing and running Git hooks automatically before
+commits. Install it via pip:
 
-Pre-commit is an optional tool, but it will help speed up your developer workflows by providing you with essentially the
-same validations that are performed by [Github Actions workflows](Github_Actions.md) in the repository.
+Pre-commit is an optional tool, but it will help speed up your developer
+workflows by providing you with essentially the same validations that are
+performed by [Github Actions workflows](Github_Actions.md) in the repository.
 
-**Install Pre-commit Hooks:** Set up the Git hooks defined in `.pre-commit-config.yaml`. This command only needs to
-   be run once per clone.
+**Install Pre-commit Hooks:** Set up the Git hooks defined in
+`.pre-commit-config.yaml`. This command only needs to be run once per clone.
 
     ```bash
     pre-commit install
@@ -30,22 +35,25 @@ same validations that are performed by [Github Actions workflows](Github_Actions
 
 ## 3. Installing the `agf` CLI Locally (Optional, but Recommended)
 
-While the pre-commit hooks automatically download and use a specific version of `agf` (see Section 5), you will likely
-want to install `agf` locally for manual testing, debugging, or running commands outside the pre-commit process.
+While the pre-commit hooks automatically download and use a specific version of
+`agf` (see Section 5), you will likely want to install `agf` locally for manual
+testing, debugging, or running commands outside the pre-commit process.
 
 Choose one of the following methods:
 
 * **Method A: Using `go install` (Recommended if Go is installed)**
-    This compiles and installs the latest version from the main branch directly from GitHub.
+    This compiles and installs the latest version from the main branch directly
+    from GitHub.
 
-    ```bash
-    # Replace with the correct repository path
-    go install [github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@latest](https://github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@latest)
-    # Or install a specific version
-    # go install [github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@v0.2.0](https://github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@v0.2.0)
-    ```
+```bash
+# Replace with the correct repository path
+go install [github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@latest](https://github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@latest)
+# Or install a specific version
+# go install [github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@v0.2.0](https://github.com/YOUR_USERNAME/YOUR_REPO/cmd/agf@v0.2.0)
+```
 
-    *Ensure your Go bin directory (`$GOPATH/bin` or `$HOME/go/bin`) is in your system's `PATH`.*
+    *Ensure your Go bin directory (`$GOPATH/bin` or `$HOME/go/bin`) is in your
+    system's `PATH`.*
 
 * **Method B: Downloading from GitHub Releases**
     1. Go to the repository's [Releases page](https://github.com/YOUR_USERNAME/YOUR_REPO/releases).
@@ -56,20 +64,27 @@ Choose one of the following methods:
 
 ## 4. Pre-Commit Hooks
 
-We use `pre-commit` to automatically run checks before each commit. This helps maintain code quality and consistency.
+We use `pre-commit` to automatically run checks before each commit. This helps
+maintain code quality and consistency.
 
 * **Setup:** You already ran `pre-commit install` in the Getting Started section.
-* **How it Works:** When you run `git commit`, the hooks defined in `.pre-commit-config.yaml` will execute automatically
-  on the staged files. These include:
+* **How it Works:** When you run `git commit`, the hooks defined in
+`.pre-commit-config.yaml` will execute automatically on the staged files. These
+include:
   * Standard checks (YAML, JSON, TOML formatting, trailing whitespace, etc.).
   * Go checks (`go mod tidy`, `go test`).
   * **AGF CLI checks:** Hooks like `agf-lint-all`, `agf-validate-terraform`, `agf-validate-policies`.
-* **AGF Version Management:** The AGF-specific hooks use a helper script (`./scripts/run-agf.sh`) which automatically
-  downloads and caches the specific version of `agf` defined in the `.pre-commit-config.yaml`. **You do not need to have
-  `agf` installed locally just for the pre-commit hooks to work.** However, the Go hooks (`go-mod-tidy`,
+* **AGF Version Management:** The AGF-specific hooks use a helper script
+(`./scripts/run-agf.sh`) which automatically
+  downloads and caches the specific version of `agf` defined in the
+  `.pre-commit-config.yaml`. **You do not need to have
+  `agf` installed locally just for the pre-commit hooks to work.** However, the
+  Go hooks (`go-mod-tidy`,
   `go-unit-tests`) do require a local Go installation.
-* **Failures:** If any hook fails, the commit will be aborted. Review the error message, fix the issues (some hooks like
-  formatters might fix things automatically), `git add` the changes again, and re-run `git commit`.
+* **Failures:** If any hook fails, the commit will be aborted. Review the error
+message, fix the issues (some hooks like
+  formatters might fix things automatically), `git add` the changes again, and
+  re-run `git commit`.
 
 ## 6. Development Workflow
 
@@ -104,8 +119,8 @@ We use `pre-commit` to automatically run checks before each commit. This helps m
     git commit -m "Your descriptive commit message"
     ```
 
-    * Please review our requirements for commit messages below. The pre-commit hooks will run automatically. Fix any
-      issues reported.
+    * Please review our requirements for commit messages below. The pre-commit
+    hooks will run automatically. Fix any issues reported.
 6. **Push Branch:**
 
     ```bash
@@ -113,14 +128,15 @@ We use `pre-commit` to automatically run checks before each commit. This helps m
     ```
 
 7. **Create Pull Request:** Open a Pull Request (PR) on GitHub from your branch to `main`.
-8. **CI Checks:** GitHub Actions workflows will run automatically on your PR (e.g., unit tests, coverage checks, build
-   validation). Ensure these pass.
+8. **CI Checks:** GitHub Actions workflows will run automatically on your PR
+(e.g., unit tests, coverage checks, build validation). Ensure these pass.
 9. **Review and Merge:** Once reviewed and approved, the PR can be merged into `main`.
 
 ## 7. Commit Messages
 
-Please write clear and descriptive commit messages. While not strictly enforced *yet* (TODO), following a convention
-helps with understanding history and automated changelog generation. Consider using prefixes like:
+Please write clear and descriptive commit messages. While not strictly enforced
+*yet*, following a convention helps with understanding history and
+automated changelog generation. Consider using prefixes like:
 
 * `feat:` for new features.
 * `fix:` for bug fixes.
@@ -133,11 +149,13 @@ helps with understanding history and automated changelog generation. Consider us
 * `ci:` for changes to CI configuration.
 * `chore:` for routine tasks or maintenance.
 
-Meaningful messages greatly improve the quality of the release notes generated by GoReleaser.
+Meaningful messages greatly improve the quality of the release notes generated
+by GoReleaser.
 
 ## 8. Release Process (Maintainers Only)
 
-Releases are created using a combination of manual triggering and automation via GitHub Actions and GoReleaser.
+Releases are created using a combination of manual triggering and automation via
+GitHub Actions and GoReleaser.
 
 1. **Triggering:** A maintainer initiates a release via the GitHub Actions UI:
     * Go to the "Actions" tab.
@@ -157,13 +175,14 @@ Releases are created using a combination of manual triggering and automation via
     * Creates (or updates) a GitHub Release for the tag.
     * Uploads the binaries, checksums, and release notes as assets to the GitHub Release.
 
-*Note: Releases can also be triggered by manually pushing a tag matching `v*` directly to the repository, but the
-recommended method for maintainers is via the `workflow_dispatch` UI trigger.*
+*Note: Releases can also be triggered by manually pushing a tag matching `v*`
+directly to the repository, but the recommended method for maintainers is via
+the `workflow_dispatch` UI trigger.*
 
 ## 9. Code Coverage
 
-Code coverage is automatically checked on Pull Requests and pushes to `main` via the `coverage-badge.yml` workflow. This
-workflow:
+Code coverage is automatically checked on Pull Requests and pushes to `main` via
+the `coverage-badge.yml` workflow. This workflow:
 
 1. Runs Go unit tests and generates a coverage profile (`coverage.out`).
 2. On pushes to `main`, it uses the `ncruces/go-coverage-report` action to calculate the coverage percentage.

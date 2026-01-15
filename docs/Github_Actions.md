@@ -1,15 +1,17 @@
 # GitHub Actions Workflows Documentation
 
-This document provides an overview of the GitHub Actions workflows used in this project. These workflows help automate
-various development tasks, ensuring code quality, consistency, and efficient releases.
+This document provides an overview of the GitHub Actions workflows used in this
+project. These workflows help automate various development tasks, ensuring code
+quality, consistency, and efficient releases.
 
 ---
 
 ## 1. AGF General Validation (`workflows/run-agf-validate.yml`)
 
 **Purpose:**
-This workflow is designed to perform a general validation of the AGF (Assured GRC Framework) Command Line Interface
-(CLI). It ensures that the CLI can be set up correctly and is executable on various operating systems.
+This workflow is designed to perform a general validation of the AGF (Assured
+GRC Framework) Command Line Interface (CLI). It ensures that the CLI can be set
+up correctly and is executable on various operating systems.
 
 **Triggers:**
 
@@ -19,28 +21,31 @@ This workflow is designed to perform a general validation of the AGF (Assured GR
 **Key Steps:**
 
 1. **Checkout code:** Retrieves the latest version of the repository.
-2. **Setup AGF CLI:** Uses a composite action (`.github/actions/setup-agf`) to install and configure a specific version
-   of the AGF CLI (`v0.2.2`).
+2. **Setup AGF CLI:** Uses a composite action (`.github/actions/setup-agf`) to
+install and configure a specific version of the AGF CLI (`v0.2.2`).
 3. **Run AGF Validation Checks:**
     * Prints the AGF CLI version to verify it's in the system's PATH and working.
     * Executes the `agf validate` command to perform standard validation checks.
 
 **Importance:**
-This workflow is crucial for ensuring that the AGF CLI is compatible with different environments (Ubuntu, Windows,
-macOS) and that its basic functionalities are operational before any code changes are merged or deployed. It acts as a
-fundamental check for the CLI's integrity.
+This workflow is crucial for ensuring that the AGF CLI is compatible with
+different environments (Ubuntu, Windows, macOS) and that its basic
+functionalities are operational before any code changes are merged or deployed.
+It acts as a fundamental check for the CLI's integrity.
 
 ---
 
 ## 2. Release CLI (`workflows/release-cli.yml`)
 
 **Purpose:**
-This workflow automates the process of building and releasing new versions of the CLI. It uses GoReleaser to handle the
-build, packaging, and creation of GitHub Releases.
+This workflow automates the process of building and releasing new versions of
+the CLI. It uses GoReleaser to handle the build, packaging, and creation of
+GitHub Releases.
 
 **Triggers:**
 
-* **Automatic:** When a new tag matching the pattern `v*` (e.g., `v1.0.0`, `v0.2.3`) is pushed to the repository.
+* **Automatic:** When a new tag matching the pattern `v*` (e.g., `v1.0.0`,
+`v0.2.3`) is pushed to the repository.
 * **Manual:** Can be triggered manually via the GitHub Actions UI (`workflow_dispatch`).
   * **Inputs for manual trigger:**
     * `version`: The release version to create (e.g., `1.0.0`, without the "v" prefix).
@@ -69,23 +74,26 @@ build, packaging, and creation of GitHub Releases.
         * Uses the `GITHUB_TOKEN` secret to publish release assets.
 
 **Importance:**
-This workflow streamlines the release process, making it consistent and reducing the chance of manual errors. It ensures
-that every tagged version is automatically built and published as a GitHub Release with appropriate assets.
+This workflow streamlines the release process, making it consistent and reducing
+the chance of manual errors. It ensures that every tagged version is
+automatically built and published as a GitHub Release with appropriate assets.
 
 ---
 
 ## 3. AGF Build Validation (`workflows/agf-build-validation.yml`)
 
 **Purpose:**
-This workflow validates that the `agf build` command has been run and its outputs (Terraform posture files and Mappings
-CSV files) are consistent with the current codebase. This is critical for ensuring that generated configuration and
+This workflow validates that the `agf build` command has been run and its
+outputs (Terraform posture files and Mappings CSV files) are consistent with the
+current codebase. This is critical for ensuring that generated configuration and
 mapping files are up-to-date before changes are merged.
 
 **Triggers:**
 
 * On `pull_request` targeting the `main` branch.
-* On `push` to any branch (`**`), any tag (`v*`), or when changes occur in specific paths (`detectors/**`,
-  `build/postures/**`, `mappings/**`, `.github/**`).
+* On `push` to any branch (`**`), any tag (`v*`), or when changes occur in
+specific paths (`detectors/**`, `build/postures/**`, `mappings/**`,
+`.github/**`).
 
 **Permissions:**
 
@@ -96,63 +104,75 @@ mapping files are up-to-date before changes are merged.
 
 ### 3.1. `validate_agf_build_terraform`
 
-**Purpose:** Ensures that Terraform posture files generated by `agf build --terraform` are up-to-date.
+**Purpose:** Ensures that Terraform posture files generated by `agf build
+--terraform` are up-to-date.
 
 **Steps:**
 
 1. **Checkout current commit.**
 2. **Setup AGF CLI:** Installs AGF CLI version `v0.2.2`.
 3. **Run 'agf build --terraform':** Generates Terraform posture files.
-4. **Check for changes and stash:** If `git status --porcelain` shows changes in `build/postures`, these generated files
-   are stashed. This captures the state of the files as generated by `agf build` on the current commit.
+4. **Check for changes and stash:** If `git status --porcelain` shows changes in
+  `build/postures`, these generated files are stashed. This captures the state
+  of the files as generated by `agf build` on the current commit.
 5. **Compare generated files with stashed files:**
-    * If a stash exists (meaning `agf build` *would* produce changes or new files compared to what's committed), this
-      step compares the committed files with the ones generated and stashed in the previous step.
+    * If a stash exists (meaning `agf build` *would* produce changes or new
+    files compared to what's committed), this step compares the committed files
+    with the ones generated and stashed in the previous step.
     * It attempts to reverse-apply the stashed changes (`git stash show -p | git apply -R --reject`).
     * It then checks out the stashed versions of the posture files into a `build/postures_stashed` directory.
     * It uses `diff` to compare each committed posture file (`build/postures/*.tf`) with its stashed (expected) counterpart.
     * If differences are found, or if there are `.rej` files (indicating conflicts during the reverse apply), it sets `validation_failed=true`.
-6. **Comment on PR (if validation failed on PR):** If running on a pull request and `validation_failed` is true, a
-   comment is added to the PR notifying that the validation failed and asking if `agf build` was run.
-7. **Fail workflow (if validation failed):** If `validation_failed` is true, the workflow run is marked as failed with
+6. **Comment on PR (if validation failed on PR):** If running on a pull request
+   and `validation_failed` is true, a comment is added to the PR notifying that
+   the validation failed and asking if `agf build` was run.
+7. **Fail workflow (if validation failed):** If `validation_failed` is true, the
+   workflow run is marked as failed with
    an error message.
 
 ### 3.2. `validate_agf_build_mappings`
 
-**Purpose:** Ensures that mapping CSV files generated by `agf build --mappings` are up-to-date.
+**Purpose:** Ensures that mapping CSV files generated by `agf build --mappings`
+are up-to-date.
 
 **Steps:**
-This job follows a very similar logic to `validate_agf_build_terraform`, but for files in the `mappings` directory:
+This job follows a very similar logic to `validate_agf_build_terraform`, but for
+files in the `mappings` directory:
 
 1. **Checkout current commit.**
 2. **Setup AGF CLI:** Installs AGF CLI version `v0.2.2`.
 3. **Run 'agf build --mappings':** Generates mapping CSV files.
 4. **Check for changes and stash:** If `git status --porcelain` shows changes in `mappings`, these generated files are stashed.
 5. **Compare generated files with stashed files:**
-    * Similar to the Terraform job, it compares committed CSV files (`mappings/*.csv`) with their stashed (expected)
+    * Similar to the Terraform job, it compares committed CSV files
+      (`mappings/*.csv`) with their stashed (expected)
       counterparts in a `mappings_stashed` directory.
     * If differences or `.rej` files are found, it sets `validation_failed=true`.
-6. **Comment on PR (if validation failed on PR):** If running on a pull request and `validation_failed` is true, a
-   comment is added to the PR.
+6. **Comment on PR (if validation failed on PR):** If running on a pull request
+   and `validation_failed` is true, a comment is added to the PR.
 7. **Fail workflow (if validation failed):** If `validation_failed` is true, the workflow run is marked as failed.
 
 **Importance:**
-This workflow is vital for maintaining the integrity of auto-generated files. It catches situations where a developer
-might have made changes to source files (e.g., detectors) but forgot to run `agf build` to update the derived Terraform
-or mapping files. This prevents inconsistencies and ensures that what's committed is the correct, generated output.
+This workflow is vital for maintaining the integrity of auto-generated files. It
+catches situations where a developer might have made changes to source files
+(e.g., detectors) but forgot to run `agf build` to update the derived Terraform
+or mapping files. This prevents inconsistencies and ensures that what's
+committed is the correct, generated output.
 
 ---
 
 ## 4. Go Unit Tests (`workflows/go-tests.yml`)
 
 **Purpose:**
-This workflow is responsible for maintaining code quality for the Go codebase. It runs linters to check for style issues
-and executes unit tests to verify functionality. It also generates and uploads code coverage reports.
+This workflow is responsible for maintaining code quality for the Go codebase.
+It runs linters to check for style issues and executes unit tests to verify
+functionality. It also generates and uploads code coverage reports.
 
 **Triggers:**
 
-* On `push` to `main`, `feature/**`, or `fix/**` branches, but only if Go files (`**.go`, `go.mod`, `go.sum`) or the
-  workflow file itself (`.github/workflows/go-tests.yml`) have changed.
+* On `push` to `main`, `feature/**`, or `fix/**` branches, but only if Go files
+  (`**.go`, `go.mod`, `go.sum`) or the workflow file itself
+  (`.github/workflows/go-tests.yml`) have changed.
 * On `pull_request` to `main`, with the same path filtering.
 
 **Permissions:**
@@ -163,7 +183,8 @@ and executes unit tests to verify functionality. It also generates and uploads c
 
 ### 4.1. `lint_golang_packages`
 
-**Purpose:** Lints the Go code to enforce coding standards and catch potential issues.
+**Purpose:** Lints the Go code to enforce coding standards and catch potential
+issues.
 
 **Steps:**
 
@@ -194,7 +215,9 @@ and executes unit tests to verify functionality. It also generates and uploads c
     * Uses `secrets.CODECOV_TOKEN` for authentication, especially for private repositories.
 
 **Importance:**
-This workflow is essential for maintaining a high level of code quality and stability. Linting helps enforce consistent
-coding styles and catches common errors early. Unit tests verify that individual components of the Go application work
-as expected, and the race detector helps find concurrency issues. Code coverage reports provide insights into how much
-of the codebase is covered by tests, encouraging developers to write comprehensive tests.
+This workflow is essential for maintaining a high level of code quality and
+stability. Linting helps enforce consistent coding styles and catches common
+errors early. Unit tests verify that individual components of the Go application
+work as expected, and the race detector helps find concurrency issues. Code
+coverage reports provide insights into how much of the codebase is covered by
+tests, encouraging developers to write comprehensive tests.
