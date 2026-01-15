@@ -1,0 +1,92 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http:#www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# .pre-commit-config.yaml
+# Pre-commit configuration using locally installed AGF CLI
+
+repos:
+  # -------------------------------------
+  # Standard Generic Hooks
+  # -------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0 # Use recent stable version
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  # -------------------------------------
+  # Go Specific Hooks
+  # -------------------------------------
+  - repo: local
+    hooks:
+      - id: go-mod-tidy
+        name: Go Mod Tidy
+        entry: go mod tidy -v
+        language: golang
+        files: '(\.go|go\.mod|go\.sum)$'
+        pass_filenames: false
+
+      - id: go-unit-tests
+        name: Go Unit Tests
+        entry: go test -race -count=1 -timeout 10m ./cmd
+        language: golang
+        types: [go]
+        pass_filenames: false
+        verbose: true
+
+  # -------------------------------------
+  # AGF CLI Specific Hooks (Requires 'agf' in PATH)
+  # -------------------------------------
+  # - repo: local
+  #   hooks:
+  #     # Specific validation for Terraform postures (adjust command/flags)
+  #     - id: agf-validate-terraform
+  #       name: AGF Validate Terraform Postures
+  #       entry: ./scripts/run_agf.sh
+  #       language: script
+  #       # Trigger if Terraform files or related inputs change
+  #       files: '(^build/postures/.*\.tf$|^detectors/.*)' # Example patterns
+  #       args: ["v0.2.2", "validate", "--terraform"] # ADJUST version and command/flags
+  #       pass_filenames: false
+  #       verbose: true
+
+  #     # Specific validation for Policy data/Rego (adjust command/flags)
+  #     - id: agf-validate-policies
+  #       name: AGF Validate Policy Data (Rego)
+  #       entry: ./scripts/run_agf.sh
+  #       language: script
+  #       # Trigger if Rego files or related inputs change
+  #       files: '(^rego/.*\.rego$|^detectors/.*)' # Example patterns
+  #       args: ["v0.2.2", "validate", "--policies"] # ADJUST version and command/flags
+  #       pass_filenames: false
+  #       verbose: true
+
+  #     # --- AGF Build Output Consistency Check ---
+  #     # Runs 'agf build' and checks specified output dirs for unstaged changes.
+  #     # NOTE: This can be slow. Run it last.
+  #     - id: agf-check-build-output
+  #       name: AGF Check Build Output Consistency
+  #       entry: ./scripts/check_build_output.sh # Path to the NEW check script
+  #       language: script
+  #       args: ["v0.2.2"] # Pass the AGF version needed for the build check
+  #       # This hook should run if any potential *input* to 'agf build' changes.
+  #       # Adjust these patterns based on what affects your build output.
+  #       # files: '(\.go|go\.mod|go\.sum|^rego/.*|^detectors/.*)$'
+  #       pass_filenames: false # The script runs 'agf build' globally
+  #       verbose: true
+  #       # Optional: Define stages if you only want this on commit, not push
+  #       # stages: [commit]

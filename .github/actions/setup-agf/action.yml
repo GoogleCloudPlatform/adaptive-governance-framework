@@ -1,0 +1,46 @@
+name: 'Setup AGF CLI'
+description: 'Downloads, extracts, and adds a specific version of the AGF CLI to the PATH using the shared run_agf.sh script'
+
+inputs:
+  version:
+    description: 'The version of AGF CLI to install (e.g., v0.2.0)'
+    required: true
+  script-path:
+    description: 'Path to the run_agf.sh script relative to repository root'
+    required: false
+    default: './scripts/run_agf.sh' # Adjust if your script is elsewhere
+
+outputs:
+  cli-path: # Output the full path to the downloaded binary (run_agf.sh needs to output this)
+    description: "Full path to the downloaded AGF CLI executable"
+    # This assumes run_agf.sh will output the path in the required format
+    # We might need to adjust run_agf.sh or how we capture the path here.
+    # For now, we focus on adding it to PATH.
+    # value: ${{ steps.setup.outputs.cli-path }} # Revisit this if needed
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure script is executable
+      shell: bash
+      run: chmod +x ${{ inputs.script-path }}
+
+    - name: Run shared setup script (run_agf.sh)
+      id: setup
+      shell: bash
+      run: |
+        echo "Executing shared script: ${{ inputs.script-path }} with version ${{ inputs.version }}"
+        # Execute the script, passing the version as the first argument
+        # The script itself handles download, cache, execution logic.
+        # It should add the correct directory to $GITHUB_PATH internally.
+        ${{ inputs.script-path }} ${{ inputs.version }} version # Run 'agf version' as a test
+
+        # --- How to get the output path? ---
+        # Option 1: Assume run_agf.sh adds the dir to GITHUB_PATH (already done in previous script version)
+        # Option 2: Modify run_agf.sh to echo the final path at the end, capture it here.
+        # Example for Option 2 (if run_agf.sh echoes the path):
+        #   CLI_EXEC_PATH=$(${{ inputs.script-path }} ${{ inputs.version }} version) # Run command that might echo path
+        #   echo "Captured path (example): ${CLI_EXEC_PATH}"
+        #   # echo "cli-path=${CLI_EXEC_PATH}" >> $GITHUB_OUTPUT # Set output if needed
+        echo "run_agf.sh should have added the CLI directory to the PATH."
+

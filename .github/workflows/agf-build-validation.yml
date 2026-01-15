@@ -1,0 +1,229 @@
+name: AGF Build Validation
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+    paths:
+      - detectors/**
+      - build/postures/**
+      - mappings/**
+      - .github/**
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate_agf_build_terraform:
+    name: Validate 'agf build' was run for Terraform
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - name: "Checkout current commit"
+        uses: actions/checkout@v4
+
+      # --- Use the composite action to setup AGF CLI ---
+      - name: Setup AGF CLI
+        id: setup_agf
+        uses: ./.github/actions/setup-agf
+        with:
+          version: 'v0.2.2'
+
+      - name: Run 'agf build'
+        id: build
+        run: |
+          echo "Running agf build..."
+          agf build --terraform
+          echo "'agf build --terraform' completed."
+
+      - name: "Check for changes and stash if necessary"
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            git stash push -u -m "Stashing generated files" build/postures
+          else
+            echo "No changes detected. Skipping stashing."
+          fi
+
+      - name: Compare generated files with stashed files (if stash exists)
+        id: compare
+        continue-on-error: true
+        run: |
+            if [[ $(git stash list) ]]; then
+                # Apply stash and generate apply_output.txt (redirect stderr to stdout)
+                git stash show -p | git apply -R --reject 2>&1 | tee apply_output.txt
+
+                # Ensure _stashed directories exist
+                mkdir -p build/postures_stashed
+
+                # Apply stashed changes to the _stashed directories
+                git checkout stash -- build/postures
+
+                # Loop through each Terraform posture file
+                for posture_file in build/postures/*.tf; do
+                    # Extract the posture name from the file name
+                    posture_name=$(basename "$posture_file" .tf)
+
+                    # Use diff to compare the specific posture file with its stashed counterpart
+                    if diff -u --color=always "$posture_file" "build/postures_stashed/${posture_name}.tf" > "diff_${posture_name}.txt"; then
+                        echo "::warning file=diff_${posture_name}.txt::Differences found in Terraform posture file: ${posture_name}.tf"
+                        cat "diff_${posture_name}.txt"
+                        echo "validation_failed=true" >> $GITHUB_OUTPUT
+                    fi
+                done
+
+                # Check for rejects (.rej files) and log them as warnings
+                find build -name "*.rej" -print0 | while IFS= read -r -d '' rej_file; do
+                    echo "::warning file=$rej_file::Conflicts found in $rej_file:"
+                    cat "$rej_file"
+                done
+
+                # Check for errors during patch application (check for both "error" and "reject" in the output)
+                if grep -q -E "error:|reject" apply_output.txt; then
+                    echo "::error file=apply_output.txt::Errors or rejects occurred during patch application:"
+                    cat apply_output.txt
+                    echo "validation_failed=true" >> $GITHUB_OUTPUT
+                fi
+
+                # Remove the stash entry
+                git stash pop
+            else
+                echo "No stash found. Skipping comparison."
+            fi
+
+      - name: Comment on PR using github-script (if stash exists)
+        if: github.event_name == 'pull_request' && steps.compare.outputs.validation_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: "The Terraform validation workflow run exited with errors. Did you run 'agf build' before committing?",
+            });
+
+      - name: Fail workflow if validation failed
+        if: steps.compare.outputs.validation_failed == 'true'
+        run: |
+            echo "::error::The Terraform validation workflow run exited with errors. Did you run 'agf build' before committing?"
+            echo "[Errors highlighted by diff]"
+
+            # Loop through each .rej file and print its contents
+            find build -name "*.rej" -print0 | while IFS= read -r -d '' rej_file; do
+                echo "::warning file=$rej_file::Conflicts found in $rej_file:"
+                cat "$rej_file"
+            done
+
+            exit 1
+
+  validate_agf_build_mappings:
+    name: Validate 'agf build' was run for Mappings
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - name: "Checkout current commit"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- Use the composite action to setup AGF CLI ---
+      - name: Setup AGF CLI
+        id: setup_agf
+        uses: ./.github/actions/setup-agf 
+        with:
+          version: 'v0.2.2'
+
+      - name: Run 'agf build'
+        id: build
+        run: |
+          echo "Running agf build..."
+          agf build --mappings
+          echo "'agf build --mappings' completed."
+
+      - name: "Check for changes and stash if necessary"
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            git stash push -u -m "Stashing generated files" mappings
+          else
+            echo "No changes detected. Skipping stashing."
+          fi
+
+      - name: Compare generated files with stashed files (if stash exists)
+        id: compare
+        continue-on-error: true
+        run: |
+          if [[ $(git stash list) ]]; then
+              # Apply stash and generate apply_output.txt (redirect stderr to stdout)
+              git stash show -p | git apply -R --reject 2>&1 | tee apply_output.txt
+
+              # Ensure _stashed directories exist
+              mkdir -p mappings_stashed
+
+              # Apply stashed changes to the _stashed directories
+              git checkout stash -- mappings
+
+              # Loop through each CSV file
+              for file in mappings/*.csv; do
+                  # Extract the posture name from the file name
+                  file_name=$(basename "$file" .csv)
+
+                  # Use diff to compare the specific posture file with its stashed counterpart
+                  if diff -u --color=always "$file" "mappings_stashed/${file_name}.csv" > "diff_${file_name}.txt"; then
+                      echo "::warning file=diff_${file_name}.txt::Differences found in CSV file: ${file_name}.csv"
+                      cat "diff_${file_name}.txt"
+                      echo "validation_failed=true" >> $GITHUB_OUTPUT
+                  fi
+              done
+
+              # Check for rejects (.rej files) and log them as warnings
+              find mappings -name "*.rej" -print0 | while IFS= read -r -d '' rej_file; do
+                  echo "::warning file=$rej_file::Conflicts found in $rej_file:"
+                  cat "$rej_file"
+              done
+
+              # Check for errors during patch application (check for both "error" and "reject" in the output)
+              if grep -q -E "error:|reject" apply_output.txt; then
+                  echo "::error file=apply_output.txt::Errors or rejects occurred during patch application:"
+                  cat apply_output.txt
+                  echo "validation_failed=true" >> $GITHUB_OUTPUT
+              fi
+
+              # Remove the stash entry
+              git stash pop
+          else
+              echo "No stash found. Skipping comparison."
+          fi
+
+      - name: Comment on PR using github-script (if stash exists)
+        if: github.event_name == 'pull_request' && steps.compare.outputs.validation_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "The policy mapping validation workflow run exited with errors. Did you run 'agf build' before committing?"
+            });
+
+      - name: Fail workflow if validation failed
+        if: steps.compare.outputs.validation_failed == 'true'
+        run: |
+          echo "::error::The policy mapping validation workflow run exited with errors. Did you run 'agf build' before committing?"
+          echo "[Errors highlighted by diff]"
+
+          # Loop through each .rej file and print its contents
+          find mappings -name "*.rej" -print0 | while IFS= read -r -d '' rej_file; do
+              echo "::warning file=$rej_file::Conflicts found in $rej_file:"
+              cat "$rej_file"
+          done
+
+          exit 1

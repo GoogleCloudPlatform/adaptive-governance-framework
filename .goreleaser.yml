@@ -1,0 +1,69 @@
+# .goreleaser.yml
+project_name: agf # Your CLI name
+before:
+  hooks:
+    - go mod tidy
+    # - go generate ./... # Uncomment if you use go generate
+builds:
+  - id: agf-cli
+    main: ./ # Assumes your main.go is in the root
+    binary: agf # The output binary name
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w # Strips debug information to reduce binary size.
+      - -X main.Version={{.Version}} # Injects the Git tag version (e.g., 0.1.0)
+      - -X main.Commit={{.ShortCommit}} # Injects the short Git commit hash
+      - -X main.Date={{.Date}} # Injects the build date
+archives:
+  - id: agf-archives
+    builds: [agf-cli] # Link to the build id
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # For Windows, GoReleaser will automatically use .zip if format is tar.gz,
+    # or you can define a separate archive entry for windows with format: zip
+    files:
+      - LICENSE
+      - README.md
+    # --- Windows .zip override ---
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next" # e.g., v0.1.0-next
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "merge conflict"
+      - "Merge pull request"
+      - "(?i)skip changelog" # Exclude commits with 'skip changelog' (case-insensitive)
+  # Groups commits by type (requires commit messages like 'feat: ...', 'fix: ...')
+  groups:
+    - title: "🚀 Features"
+      regexp: '^feat(\(.*\))?:'
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: '^fix(\(.*\))?:'
+      order: 1
+    - title: "🧰 Maintenance"
+      # Catch commits starting with chore, refactor, perf, style, build, ci, revert
+      regexp: '^(chore|refactor|perf|style|build|ci|revert)(\(.*\))?:'
+      order: 99 # Put these last
+release:
+  github:
+    # owner: your-github-username # or organization, auto-detected if run in Actions from the repo
+    # name: your-repo-name      # auto-detected if run in Actions from the repo
+  draft: false # Set to true if you want to manually publish releases
+  prerelease: auto # Marks as pre-release if version string contains alpha, beta, etc.
