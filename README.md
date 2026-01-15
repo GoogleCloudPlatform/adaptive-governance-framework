@@ -1,8 +1,6 @@
 # Adaptive Governance Framework
 
-// TODO: Update Codecov once out of staging and add [goreportcard.com](https://goreportcard.com/)
-
-[![codecov](https://codecov.io/gh/tdesrosi/agf-googlestaging-clone/graph/badge.svg?token=KX3QXVHW4M)](https://codecov.io/gh/tdesrosi/agf-googlestaging-clone)
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/adaptive-governance-framework.git)
 
 > [!NOTE]
 > This is not an officially supported Google product. This project is not eligible for the [Google Open Source Software
