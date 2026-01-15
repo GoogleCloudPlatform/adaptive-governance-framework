@@ -47,7 +47,7 @@ else
     echo "[INFO] Running in local environment."
     # Use GITHUB_REPOSITORY if set (e.g., by act), otherwise fallback.
     # WARNING: Fallback is hardcoded, might need adjustment if repo name changes or for forks.
-    REPO_OWNER_AND_NAME="${GITHUB_REPOSITORY:-tdesrosi/agf-googlestaging-clone}"
+    REPO_OWNER_AND_NAME="${GITHUB_REPOSITORY:-GoogleCloudPlatform/adaptive-governance-framework}"
     # Use local .bin directory for caching locally (ensure .bin/ is in .gitignore)
     LOCAL_BIN_ROOT=".bin"
     echo "[INFO] Using repository: ${REPO_OWNER_AND_NAME}"
