@@ -23,24 +23,29 @@ runs:
   steps:
     - name: Ensure script is executable
       shell: bash
-      run: chmod +x ${{ inputs.script-path }}
+      run: chmod +x ${INPUTS_SCRIPT_PATH}
+      env:
+        INPUTS_SCRIPT_PATH: ${{ inputs.script-path }}
 
     - name: Run shared setup script (run_agf.sh)
       id: setup
       shell: bash
       run: |
-        echo "Executing shared script: ${{ inputs.script-path }} with version ${{ inputs.version }}"
+        echo "Executing shared script: ${INPUTS_SCRIPT_PATH} with version ${INPUTS_VERSION}"
         # Execute the script, passing the version as the first argument
         # The script itself handles download, cache, execution logic.
         # It should add the correct directory to $GITHUB_PATH internally.
-        ${{ inputs.script-path }} ${{ inputs.version }} version # Run 'agf version' as a test
+        ${INPUTS_SCRIPT_PATH} ${INPUTS_VERSION} version # Run 'agf version' as a test
 
         # --- How to get the output path? ---
         # Option 1: Assume run_agf.sh adds the dir to GITHUB_PATH (already done in previous script version)
         # Option 2: Modify run_agf.sh to echo the final path at the end, capture it here.
         # Example for Option 2 (if run_agf.sh echoes the path):
-        #   CLI_EXEC_PATH=$(${{ inputs.script-path }} ${{ inputs.version }} version) # Run command that might echo path
+        #   CLI_EXEC_PATH=$(${INPUTS_SCRIPT_PATH} ${INPUTS_VERSION} version) # Run command that might echo path
         #   echo "Captured path (example): ${CLI_EXEC_PATH}"
         #   # echo "cli-path=${CLI_EXEC_PATH}" >> $GITHUB_OUTPUT # Set output if needed
         echo "run_agf.sh should have added the CLI directory to the PATH."
+      env:
+        INPUTS_SCRIPT_PATH: ${{ inputs.script-path }}
+        INPUTS_VERSION: ${{ inputs.version }}
 
