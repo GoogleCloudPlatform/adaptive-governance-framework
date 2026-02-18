@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
            # If triggered via workflow_dispatch, checkout the requested branch.
            # Otherwise (tag push), checkout the tag itself using github.ref.
