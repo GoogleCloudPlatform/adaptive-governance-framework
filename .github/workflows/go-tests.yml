@@ -35,7 +35,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.26"
           cache: true # Enables caching of Go modules and build cache
 
       - name: Run tests and generate coverage profile
