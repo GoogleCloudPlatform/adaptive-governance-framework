@@ -41,13 +41,13 @@ jobs:
       - name: Configure Git User (if manually triggered)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Create and Push Tag (if manually triggered)
         if: github.event_name == 'workflow_dispatch'
         run: |
-           TAG="v${{ github.event.inputs.version }}"
+           TAG="v${GITHUB_EVENT_INPUTS_VERSION}"
            echo "Workflow triggered manually. Creating and pushing tag ${TAG}"
 
            # Create annotated tag locally
@@ -56,6 +56,8 @@ jobs:
            # Push tag using the workflow's default GITHUB_TOKEN
            git push origin "${TAG}"
            echo "Tag ${TAG} pushed."
+        env:
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
       # =====================================================================
       # GoReleaser steps (Run for BOTH manual and tag-push triggers)
       # =====================================================================
