@@ -25,24 +25,25 @@ permissions:
   # The ncruces/go-coverage-report action writes to the repository's wiki.
 
 jobs:
-  lint_golang_packages:
-    name: Lint Golang packages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+  # TODO: Find linter compatible with Go 1.26 and re-enable linting
+  # lint_golang_packages:
+  #   name: Lint Golang packages
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26'
+  #     - name: Set up Go
+  #       uses: actions/setup-go@v5
+  #       with:
+  #         go-version: '1.26'
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: cmd
-          args: --timeout=5m
+  #     - name: Run golangci-lint
+  #       uses: golangci/golangci-lint-action@v6
+  #       with:
+  #         version: latest
+  #         working-directory: cmd
+  #         args: --timeout=5m
 
   test_golang_packages:
     name: Unit test Golang packages
