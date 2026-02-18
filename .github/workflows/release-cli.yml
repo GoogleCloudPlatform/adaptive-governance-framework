@@ -62,7 +62,7 @@ jobs:
       # GoReleaser steps (Run for BOTH manual and tag-push triggers)
       # =====================================================================
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.26' # Specify your Go version
           cache: true
