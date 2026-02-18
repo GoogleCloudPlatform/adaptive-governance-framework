@@ -64,7 +64,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23' # Specify your Go version
+          go-version: '1.26' # Specify your Go version
           cache: true
 
       - name: Run GoReleaser
