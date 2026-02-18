@@ -26,7 +26,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     steps:
       - name: "Checkout current commit"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # --- Use the composite action to setup AGF CLI ---
       - name: Setup AGF CLI
@@ -129,7 +129,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     steps:
       - name: "Checkout current commit"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
